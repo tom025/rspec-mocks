@@ -59,6 +59,7 @@ module RSpec
         @argument_list_matcher = ArgumentListMatcher::MATCH_ALL
         @order_group = expectation_ordering
         @order_group.register(self) unless type == :stub
+        @expectation_type = type
         @ordered = false
         @at_least = @at_most = @exactly = nil
         @args_to_yield = []
@@ -438,6 +439,11 @@ module RSpec
       #   expect(api).to receive(:finish).ordered
       def ordered(&block)
         self.inner_implementation_action = block
+        if @exactly && @expected_received_count > 1
+          (@expected_received_count - 1).times do
+            @order_group.register(self) unless @expectation_type == :stub
+          end
+        end
         @ordered = true
         self
       end

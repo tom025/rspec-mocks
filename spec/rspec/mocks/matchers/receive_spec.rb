@@ -300,6 +300,33 @@ module RSpec
         it_behaves_like "resets partial mocks cleanly" do
           let(:target) { expect(object) }
         end
+
+        context "ordered with receive counts" do
+          let(:dbl) { double(:one => 1, :two => 2) }
+
+          it "passes when the ordering is correct" do
+            expect(dbl).to receive(:one).twice.ordered
+            expect(dbl).to receive(:two).once.ordered
+
+            dbl.one
+            dbl.one
+            dbl.two
+          end
+
+          it "fails when the ordering is incorrect" do
+            expect {
+              expect(dbl).to receive(:one).twice.ordered
+              expect(dbl).to receive(:two).once.ordered
+
+              dbl.one
+              dbl.two
+              dbl.one
+            }.to raise_error(/out of order/)
+            # I don't like doing this, would RSpec::Mocks.space.reset_all be better?
+            dbl.one
+            dbl.two
+          end
+        end
       end
 
       describe "expect_any_instance_of(...).to receive" do
